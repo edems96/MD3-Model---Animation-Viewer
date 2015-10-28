@@ -73,7 +73,5 @@ void MD3Anim_FreeAnims(MD3Anims *anims) {
 		for(i = 0; i < anims->n_anims; i++) {
 			free(&anims->anims[i]);
 		}
-		
-		free(anims);
 	}
 }

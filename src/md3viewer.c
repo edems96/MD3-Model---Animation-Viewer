@@ -235,6 +235,8 @@ void MD3Viewer_NextAnim() {
 
 void MD3Viewer_NextFrame() {
 	if( mAnims != NULL ) {
+		printf("f: %u\n", mFrame);
+		
 		mFrame++;
 		mFrame = (mFrame % mAnims->anims[mAnim].numFrames);
 	}

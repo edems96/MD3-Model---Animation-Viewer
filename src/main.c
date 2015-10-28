@@ -67,7 +67,6 @@ int main(int argc, char *args[]) {
 	if( MD3Viewer_Init(screen_width, screen_height, fullscreen) ) {
 		if( file != NULL && MD3Loader_Load(&model, file) ) {
 			
-			debug = false;
 			if( debug ) {
 				uint j;
 				
@@ -118,10 +117,14 @@ int main(int argc, char *args[]) {
 					printf("failed to load animFile: %s\n", animFile);
 			
 				MD3Viewer_Start();
+				printf("quit\n");
 				MD3Viewer_Quit();
 			}
 			
+			printf("free model\n");
 			MD3Loader_FreeModel(&model);
+			
+			printf("free anims\n");
 			if( animFile != NULL )
 				MD3Anim_FreeAnims(&anims);
 			

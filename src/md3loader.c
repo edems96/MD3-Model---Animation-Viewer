@@ -379,6 +379,4 @@ void MD3Loader_FreeModel(MD3Model *model) {
 	}
 	
 	//free(model->path);
-	
-	free(model);
 }
