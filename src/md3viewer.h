@@ -10,6 +10,8 @@
 #include <GL/GL.h>
 #include <GL/Glu.h>
 
+#include "openglut/openglut.h"
+
 #include "types.h"
 
 #include "md3structs.h"

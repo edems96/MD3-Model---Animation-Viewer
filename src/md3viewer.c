@@ -85,7 +85,7 @@ void MD3Viewer_Start() {
 }
 
 void MD3Viewer_Draw() {
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	//glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 	
@@ -94,8 +94,23 @@ void MD3Viewer_Draw() {
 	glRotatef(mRotate.y, 0.0f, 1.0f, 0.0f);
 	
 	glScalef(mModel->scale, mModel->scale, mModel->scale);
-
+	
 	MD3Viewer_DrawModel();
+	
+	//glLoadIdentity();
+	
+	//glScalef(10, 10, 10);
+	//glTranslatef(0, 00, 0);
+	glLoadIdentity();
+	glPushMatrix();
+	glTranslatef(-mPosition.x, -mPosition.y, -mPosition.z);
+	glTranslatef(0.0f, 40.0f, -1);
+	glRotatef(-mRotate.x, 1.0f, 0.0f, 0.0f);
+	glRotatef(-mRotate.y, 0.0f, 1.0f, 0.0f);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	const uchar str[] = "Hello World!";
+	glutStrokeString(NULL, str);
+	glPopMatrix();
 }
 
 void MD3Viewer_Events() {
@@ -201,21 +216,31 @@ bool MD3Viewer_Screenshot(const char *filename) {
 	int w, h;
 	SDL_GetWindowSize(mWindow, &w, &h);
 	
-	uchar *pixels = (uchar *) malloc(w*h*4);
+	printf("w: %d h: %d\n", w, h);
+	uchar *pixels = (uchar *) malloc(w * h * 4);
 	
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	
+	printf("p read\n");
 	// TODO: rotate pixels / image
+	
+	int y;
+	
+	uchar *swap = (uchar*) malloc(w * 4);
+	for(y = 0; y < h / 2; y++) {
+		memcpy(swap, 								(pixels + (h-y-1) * h), 	w * 4);
+		memcpy((pixels + (h-y-1) * h), 				(pixels + y * h),			w * 4);
+		memcpy((pixels + y * h),					swap,								w * 4);
+	}
 	
     SDL_Surface * surface = SDL_CreateRGBSurfaceFrom(
 		pixels, w, h, 
-		8*4, w*4, 
+		8 * 4, w * 4, 
 		0x0000ff, 0x00ff00, 0xff0000, 0);
-
+		
     SDL_SaveBMP(surface, filename);
-
     SDL_FreeSurface(surface);
-    free(surface);
+	
+	free(pixels);
 	
 	return true;
 }
@@ -235,7 +260,7 @@ void MD3Viewer_NextAnim() {
 
 void MD3Viewer_NextFrame() {
 	if( mAnims != NULL ) {
-		printf("f: %u\n", mFrame);
+		//printf("f: %u\n", mFrame);
 		
 		mFrame++;
 		mFrame = (mFrame % mAnims->anims[mAnim].numFrames);

@@ -86,7 +86,7 @@ typedef struct MD3Model {
 	MD3Surface 	*surfaces;
 	
 	float 		scale;
-	uint		fps;
+	ushort		fps;
 	const char	*path;
 } MD3Model;
 

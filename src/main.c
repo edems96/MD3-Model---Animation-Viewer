@@ -23,7 +23,7 @@ int main(int argc, char *args[]) {
 		info			= DEF_INFO;
 		
 	if( argc == 1 ) {
-		fprintf(stderr, "main: Too few arguments!\n");
+		fprintf(stderr, "Too few arguments!\n");
 		printUsage(args[0]);
 		return 1;
 	}
@@ -104,27 +104,19 @@ int main(int argc, char *args[]) {
 			if( !info ) {
 				MD3Viewer_SetModel(&model);
 				
-				if( animFile != NULL && MD3Anim_Load(animFile, &anims) ) {
-					MD3Viewer_SetAnims(&anims);
-					printf("animFile: %s\n", animFile);
-					printf("anims: %u\n", anims.n_anims);
+				if( animFile != NULL ) {
 					
-					uint k;
-					for(k = 0; k < anims.n_anims; k++) {
-						printf("%u: %s\n", k, anims.anims[k].name);
-					}
-				} else
-					printf("failed to load animFile: %s\n", animFile);
-			
+					if( MD3Anim_Load(animFile, &anims) )
+						MD3Viewer_SetAnims(&anims);
+					else
+						fprintf(stderr, "Failed to load animation file: '%s'\n", animFile);
+				} 
+					
 				MD3Viewer_Start();
-				printf("quit\n");
 				MD3Viewer_Quit();
 			}
 			
-			printf("free model\n");
 			MD3Loader_FreeModel(&model);
-			
-			printf("free anims\n");
 			if( animFile != NULL )
 				MD3Anim_FreeAnims(&anims);
 			
@@ -147,7 +139,7 @@ void printUsage(char *program) {
 	printf("Usage: %s [OPTIONS] -f FILE.md3", program);
 	printf("Options:\n");
 	printf("\t-f <file>.md3\t| Set model's file\n");
-	printf("\t-a <file.cfg\t| Set model's animation file\n");
+	printf("\t-a <file.cfg>\t| Set model's animation file\n");
 	printf("\t-W <width>\t| Set screen's width\n");
 	printf("\t-H <height>\t| Set screen's height\n");
 	printf("\t-F\t\t| Fullscreen\n");

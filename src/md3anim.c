@@ -35,8 +35,7 @@ bool MD3Anim_Load(const char *file, MD3Anims *anims) {
 				anim.name);
 				
 			if( r == 5 ) {
-				printf("anim readed: '%s' %u %u %u %u!\n", anim.name, anim.firstFrame, anim.numFrames, anim.loopingFrames, anim.fps);
-				
+				//printf("anim readed: '%s' %u %u %u %u!\n", anim.name, anim.firstFrame, anim.numFrames, anim.loopingFrames, anim.fps);
 				MD3Anim_PushAnim(anims, anim);
 			}
 		}
