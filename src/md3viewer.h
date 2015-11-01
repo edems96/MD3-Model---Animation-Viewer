@@ -13,6 +13,9 @@
 #include "openglut/openglut.h"
 
 #include "types.h"
+#include "config.h"
+#include "utils.h"
+#include "camera.h"
 
 #include "md3structs.h"
 #include "md3anim.h"
@@ -23,22 +26,31 @@
 SDL_Window *mWindow;
 SDL_GLContext mGLContext;
 
+Config *mConfig;
+
 MD3Model *mModel;
 MD3Anims *mAnims;
 
 vector mPosition, mRotate;
 
-uint mFrame, mAnim;
+uint mFrame, mAnim, mFPS, mFPSFrames;
+
+Uint32 mLastTime;
+
+float mScreenRatio;
 
 bool mRunning, 
 	 mTexture,
 	 mTriangles;
 
-bool MD3Viewer_Init(ushort width, ushort height, bool fullscreen);
-bool MD3Viewer_InitOpenGL(ushort width, ushort height);
+bool MD3Viewer_Init(Config *config);
+bool MD3Viewer_InitOpenGL();
 
 void MD3Viewer_SetModel(MD3Model *model);
 void MD3Viewer_SetAnims(MD3Anims *anims);
+
+void MD3Viewer_Switchto3D();
+void MD3Viewer_Switchto2D();
 
 void MD3Viewer_Start();
 
@@ -46,8 +58,12 @@ void MD3Viewer_Draw();
 void MD3Viewer_Events();
 
 void MD3Viewer_DrawModel();
+void MD3Viewer_DrawText(const uchar str[], int x, int y);
+void MD3Viewer_DrawFPS();
+void MD3Viewer_DrawInfo();
 
 void MD3Viewer_OnKeyDown(SDL_Keycode keyCode);
+void MD3Viewer_OnMouseWheel(MouseWheel direction);
 
 void MD3Viewer_Quit();
 

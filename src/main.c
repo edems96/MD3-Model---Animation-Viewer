@@ -1,26 +1,11 @@
 #include "main.h"
 
 int main(int argc, char *args[]) {
-	MD3Model model;
-	model.scale = DEF_MODEL_SCLAE;
-	model.fps	= DEF_FPS;
-	
-	MD3Anims anims;
-	anims.n_anims 	= 0;
-	anims.anims 	= NULL;
+	Config config;
+	Config_Init(&config);
 	
 	uint i;
 	char *file = NULL, *animFile = NULL;
-	
-	ushort 
-		screen_width 	= DEF_SCREEN_WIDTH, 
-		screen_height 	= DEF_SCREEN_HEIGHT;
-		
-	bool 
-		fullscreen 		= DEF_FULLSCREEN, 
-		redirect2File 	= DEF_REDIRECT2FILE, 
-		debug 			= DEF_DEBUG,
-		info			= DEF_INFO;
 		
 	if( argc == 1 ) {
 		fprintf(stderr, "Too few arguments!\n");
@@ -37,37 +22,53 @@ int main(int argc, char *args[]) {
 			
 			switch( args[i][1] ) {
 				case 'h': printUsage(args[0]); return 0;
-				case 'W': screen_width	= atoi(args[++i]); break;
-				case 'H': screen_height	= atoi(args[++i]); break;
-				case 's': model.scale	= atof(args[++i]); break;
-				case 'F': fullscreen 	= true; break;
-				case 'r': redirect2File = true; break;
-				case 'd': debug			= true; break;
-				case 'i': info			= true; break; 
-				case 'a': animFile 		= args[++i]; break;
+				case 'W': config.screen_width	= atoi(args[++i]); break;
+				case 'H': config.screen_height	= atoi(args[++i]); break;
+				case 's': config.model_scale	= atof(args[++i]); break;
+				case 'F': config.fullscreen 	= true; break;
+				case 'r': config.redirect2File 	= true; break;
+				case 'd': config.debug			= true; break;
+				case 'i': config.info			= true; break; 
+				case 'c': config.configFile		= args[++i]; break;
+				case 'a': animFile 				= args[++i]; break;
 				case 'f': 
 				
 					if( strncmp(args[i], "-f", 2) == 0 )
 						file = args[++i]; 
 					else if( strncmp(args[i], "-fps", 4) == 0 )
-						model.fps = atoi(args[++i]);
+						config.fps = atoi(args[++i]);
 					
 					break;
 			}
 		}
 	}
 	
-	if( redirect2File ) {
-		freopen("stdout.txt", "w+", stdout);
-		freopen("stderr.txt", "w+", stderr);
+	Config_Load(&config, config.configFile);
+	Config_Check(&config);
+	Config_Print(config);
+	
+	MD3Model model;
+	model.scale = config.model_scale;
+	model.fps	= config.fps;
+	
+	MD3Anims anims;
+	anims.n_anims 	= 0;
+	anims.anims 	= NULL;
+	
+	if( config.redirect2File ) {
+		if( config.stdoutFile )
+			freopen(config.stdoutFile, "w+", stdout);
+		
+		if( config.stderrFile )
+			freopen(config.stderrFile, "w+", stderr);
 	}
 	
 	model.path = Utils_GetPath(file);
 	
-	if( MD3Viewer_Init(screen_width, screen_height, fullscreen) ) {
+	if( MD3Viewer_Init(&config) ) {
 		if( file != NULL && MD3Loader_Load(&model, file) ) {
 			
-			if( debug ) {
+			if( config.debug ) {
 				uint j;
 				
 				MD3Loader_PrintHeaderInfo(model.header);
@@ -101,7 +102,7 @@ int main(int argc, char *args[]) {
 				} 
 			}
 			
-			if( !info ) {
+			if( !config.info ) {
 				MD3Viewer_SetModel(&model);
 				
 				if( animFile != NULL ) {
@@ -126,9 +127,12 @@ int main(int argc, char *args[]) {
 		printf("Failed to init viewer!\n");
 	
 		
-	if( redirect2File ) {
-		fclose(stdout);
-		fclose(stderr);
+	if( config.redirect2File ) {
+		if( config.stdoutFile )
+			fclose(stdout);
+		
+		if( config.stderrFile )
+			fclose(stderr);
 	}
 	
 	return 0;
@@ -140,6 +144,7 @@ void printUsage(char *program) {
 	printf("Options:\n");
 	printf("\t-f <file>.md3\t| Set model's file\n");
 	printf("\t-a <file.cfg>\t| Set model's animation file\n");
+	printf("\t-c <file.cfg>\t| Load configuration file\n");
 	printf("\t-W <width>\t| Set screen's width\n");
 	printf("\t-H <height>\t| Set screen's height\n");
 	printf("\t-F\t\t| Fullscreen\n");

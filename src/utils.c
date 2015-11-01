@@ -99,3 +99,32 @@ const char *Utils_GetFile(const char *fullPath) {
 	
 	return filename;
 }
+
+const char *Utils_GetTimedFilename(const char *prefix, const char *extension) {
+	time_t rawTime;
+	struct tm *timer;
+	
+	time(&rawTime);
+	timer = localtime(&rawTime);
+	
+	char *filename = (char *) malloc(sizeof(char) * (strlen(prefix) + strlen(extension) + 14 + 7 + 1));
+	
+	if( !filename )
+		return NULL;
+	
+	int n = sprintf(
+		filename, 
+		"%s_%d_%d_%d_%d_%d_%d.%s", 
+		prefix,
+		timer->tm_year + 1900,
+		timer->tm_mon + 1,
+		timer->tm_mday,
+		timer->tm_hour,
+		timer->tm_min,
+		timer->tm_sec,
+		extension);
+	
+	filename[n] = 0;
+		
+	return filename;
+}

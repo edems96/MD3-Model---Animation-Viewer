@@ -15,10 +15,10 @@ bool MD3Anim_Load(const char *file, MD3Anims *anims) {
 		while( !feof(f) && n < LINE_BUFFER_SIZE - 1 ) {
 			char ch = fgetc(f);
 			
-			if( ch != '\n' && ch != EOF )
-				buffer[n++] = ch;
-			else
+			if( ch == '\n' || ch == EOF )
 				break;
+
+			buffer[n++] = ch;
 		}
 		
 		if( n > 0 ) {
@@ -27,17 +27,15 @@ bool MD3Anim_Load(const char *file, MD3Anims *anims) {
 			MD3Anim anim;
 			int r = sscanf(
 				buffer,
-				"%u\t%u\t%u\t%u\t\t// %s",
+				"%hu\t%hu\t%hu\t%hu\t\t// %s",
 				&anim.firstFrame,
 				&anim.numFrames,
 				&anim.loopingFrames, 
 				&anim.fps,
 				anim.name);
 				
-			if( r == 5 ) {
-				//printf("anim readed: '%s' %u %u %u %u!\n", anim.name, anim.firstFrame, anim.numFrames, anim.loopingFrames, anim.fps);
+			if( r == 5 ) 
 				MD3Anim_PushAnim(anims, anim);
-			}
 		}
 	}
 	

@@ -10,7 +10,7 @@
 
 typedef struct MD3Anim {
 	char name[16];
-	uint firstFrame, numFrames, loopingFrames, fps;
+	ushort firstFrame, numFrames, loopingFrames, fps;
 } MD3Anim;
 
 typedef struct MD3Anims {
