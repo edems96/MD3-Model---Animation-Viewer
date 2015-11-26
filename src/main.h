@@ -11,8 +11,8 @@
 #include "md3loader.h"
 #include "md3anim.h"
 #include "md3viewer.h"
+#include "md3verbose.h"
 
 int main(int argc, char *args[]);
-void printUsage(char *program);
 
 #endif

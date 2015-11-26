@@ -91,6 +91,49 @@ bool Config_Load(Config *config, const char *filename) {
 	return true;
 }
 
+bool Config_FromArgs(Config *config, int argc, char *args[]) {
+	if( argc == 1 ) {
+		fprintf(stderr, "Too few arguments!\n");
+		Config_PrintUsage(args[0]);
+		
+		return false;
+	}
+	else if( argc == 2 ) {
+		config->modelFile = args[1];
+	} else {
+		uint i;
+		
+		for(i = 1; i < argc; i++) {
+			
+			if( args[i][0] != '-' )
+				continue;
+			
+			switch( args[i][1] ) {
+				case 'h': Config_PrintUsage(args[0]); return 0;
+				case 'W': config->screen_width	= atoi(args[++i]); break;
+				case 'H': config->screen_height	= atoi(args[++i]); break;
+				case 's': config->model_scale	= atof(args[++i]); break;
+				case 'F': config->fullscreen 	= true; break;
+				case 'r': config->redirect2File = true; break;
+				case 'd': config->debug			= true; break;
+				case 'i': config->info			= true; break; 
+				case 'c': config->configFile	= args[++i]; break;
+				case 'a': config->animFile 		= args[++i]; break;
+				case 'f': 
+				
+					if( strncmp(args[i], "-f", 2) == 0 )
+						config->modelFile = args[++i]; 
+					else if( strncmp(args[i], "-fps", 4) == 0 )
+						config->fps = atoi(args[++i]);
+					
+					break;
+			}
+		}
+	}
+	
+	return true;
+}
+
 void Config_Check(Config *config) {
 	if( config->screen_width < MIN_SCREEN_WIDTH || config->screen_height > MAX_SCREEN_WIDTH )
 		config->screen_width = DEF_SCREEN_WIDTH;
@@ -131,7 +174,27 @@ void Config_Print(Config config) {
 	printf("\tRedirect output to file: %s\n", 	config.redirect2File ? "yes" : "no");
 	printf("\tDebug mode: %s\n",				config.debug ? "yes" : "no");
 	printf("\tInfo mode: %s\n",					config.info ? "yes" : "no");
-	printf("\tConfig file: %s\n",				config.configFile);
+	printf("\tModel file: %s\n",				config.modelFile == NULL ? "NULL" : config.modelFile);
+	printf("\tAnimation file: %s\n",			config.animFile == NULL ? "NULL" : config.animFile);
+	printf("\tConfig file: %s\n",				config.configFile == NULL ? "NULL": config.configFile);
 	printf("\tStdOut file: %s\n",				config.stdoutFile == NULL ? "NULL" : config.stdoutFile);
 	printf("\tStdErr file: %s\n",				config.stderrFile == NULL ? "NULL" : config.stderrFile);
+}
+
+void Config_PrintUsage(char *program) {
+	printf("Usage: %s FILE.md3\n", program);
+	printf("Usage: %s [OPTIONS] -f FILE.md3", program);
+	printf("Options:\n");
+	printf("\t-f <file>.md3\t| Set model's file\n");
+	printf("\t-a <file.cfg>\t| Set model's animation file\n");
+	printf("\t-c <file.cfg>\t| Load configuration file\n");
+	printf("\t-W <width>\t| Set screen's width\n");
+	printf("\t-H <height>\t| Set screen's height\n");
+	printf("\t-F\t\t| Fullscreen\n");
+	printf("\t-s <scale>\t| Set model's scale\n");
+	printf("\t-fps <fps>\t| Set FPS (animation may change it)\n");
+	printf("\t-r\t\t| Redirect standard outputs, errors to file\n");
+	printf("\t-d\t\t| Enable debug mode\n");
+	printf("\t-i\t\t| Enable info mode\n");
+	printf("\t-h\t\t| Print usage / this\n\n");
 }

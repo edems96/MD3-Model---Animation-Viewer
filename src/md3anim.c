@@ -1,5 +1,9 @@
 #include "md3anim.h"
 
+#ifdef DMALLOC
+#include "debugmalloc.h"
+#endif
+
 bool MD3Anim_Load(const char *file, MD3Anims *anims) {
 	FILE *f = fopen(file, "r");
 	
@@ -64,11 +68,13 @@ bool MD3Anim_PushAnim(MD3Anims *anims, MD3Anim anim) {
 }
 
 void MD3Anim_FreeAnims(MD3Anims *anims) {
-	uint i;
+	/*uint i;
 	
 	if( anims != NULL ) {
 		for(i = 0; i < anims->n_anims; i++) {
 			free(&anims->anims[i]);
 		}
-	}
+	} */
+	
+	free(anims->anims);
 }

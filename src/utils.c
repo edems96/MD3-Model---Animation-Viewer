@@ -100,6 +100,30 @@ const char *Utils_GetFile(const char *fullPath) {
 	return filename;
 }
 
+const char *Utils_GetFileWithoutExt(const char *filename) {
+	int i = 0, k = 0;
+	
+	while( filename[i] != 0 ) {
+		if( filename[i] == '.' )
+			k = i;
+		
+		i++;
+	}
+	
+	if( k == 0 )
+		return filename;
+	
+	char *new = (char *) malloc(sizeof(char) * (k+1));
+	
+	if( !new )
+		return NULL;
+	
+	strncpy(new, filename, k);
+	new[k] = 0;
+	
+	return new;
+}
+
 const char *Utils_GetTimedFilename(const char *prefix, const char *extension) {
 	time_t rawTime;
 	struct tm *timer;

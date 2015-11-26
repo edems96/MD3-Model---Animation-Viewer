@@ -1,8 +1,12 @@
 #include "md3viewer.h"
 
+#ifdef DMALLOC
+#include "debugmalloc.h"
+#endif
+
 bool MD3Viewer_Init(Config *config) {
 	if( !config ) {
-		fprintf(stderr, "MD3Viewer_Init: Invalid config!\n");
+		MD3Viewer_Error("MD3Viewer_Init: Invalid config!\n");
 		return false;
 	}
 	
@@ -48,6 +52,10 @@ bool MD3Viewer_Init(Config *config) {
 	mAnim 			= 0;
 	mFPS			= 0;
 	mFPSFrames		= 0;
+	
+	mAutoRotateX	= false;
+	mAutoRotateY	= false;
+	mAutoRotateZ	= false;
 	
 	return true;
 }
@@ -101,6 +109,7 @@ void MD3Viewer_Start() {
 		time = SDL_GetTicks();
 		
 		MD3Viewer_Events();
+		MD3Viewer_Update();
 		MD3Viewer_Draw();
 		
 		SDL_GL_SwapWindow(mWindow);
@@ -119,28 +128,40 @@ void MD3Viewer_Start() {
 	}
 }
 
+void MD3Viewer_Update() {
+	if( mAutoRotateX )
+		mRotate.x = fmodf(++mRotate.x, 360);
+
+	if( mAutoRotateY )
+		mRotate.y = fmodf(++mRotate.y, 360);
+	
+	if( mAutoRotateZ )
+		mRotate.z = fmodf(++mRotate.z, 360);
+}
+
 void MD3Viewer_Draw() {
 	MD3Viewer_Switchto3D();
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 	
-	#if 1
 	glTranslatef(mPosition.x, mPosition.y, mPosition.z);
 	glScalef(mModel->scale, mModel->scale, mModel->scale);
 	
 	glRotatef(mRotate.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(mRotate.y, 0.0f, 1.0f, 0.0f);
-	#else
-	Camera_Rotate(mWindow);
-	Camera_Move();
-	#endif
+	glRotatef(mRotate.z, 0.0f, 0.0f, 1.0f);
 	
 	MD3Viewer_DrawModel();
 	
+	#if 1
 	MD3Viewer_Switchto2D();
-	MD3Viewer_DrawFPS();
-//	MD3Viewer_DrawInfo();
+	MD3Viewer_DrawButtons();
+		#if 0
+		MD3Viewer_DrawFPS();
+		//	MD3Viewer_DrawInfo();
+		#endif
+	#endif
 }
 
 void MD3Viewer_Events() {
@@ -150,10 +171,10 @@ void MD3Viewer_Events() {
 		
 		switch( event.type ) {
 			
-			case SDL_QUIT: 			mRunning = false; break;
-			case SDL_KEYDOWN:		MD3Viewer_OnKeyDown(event.key.keysym.sym); break;
-			case SDL_MOUSEWHEEL: 	MD3Viewer_OnMouseWheel(event.wheel.y > 0 ? MOUSE_WHEEL_UP : MOUSE_WHEEL_DOWN); break;
-			/*case SDL_MOUSEBUTTONDOWN: 	OnMouseButtonDown(event); break; */
+			case SDL_QUIT: 				mRunning = false; break;
+			case SDL_KEYDOWN:			MD3Viewer_OnKeyDown(event.key.keysym.sym); break;
+			case SDL_MOUSEBUTTONDOWN:	MD3Viewer_OnMouseButtonDown(event.button); break;
+			case SDL_MOUSEWHEEL: 		MD3Viewer_OnMouseWheel(event.wheel.y > 0 ? MOUSE_WHEEL_UP : MOUSE_WHEEL_DOWN); break;
 			
 		}
     }
@@ -162,6 +183,7 @@ void MD3Viewer_Events() {
 void MD3Viewer_DrawModel() {
 	uint i, j, k;
 	
+	glColor3f(1.0f, 1.0f, 1.0f);
 	for(i = 0; i < mModel->header.num_surfaces; i++) {
 		MD3Surface *surface = &mModel->surfaces[i];
 		
@@ -211,28 +233,55 @@ void MD3Viewer_DrawInfo() {
 		sprintf(animText, "Animation: %s", mAnims->anims[mAnim].name);
 		MD3Viewer_DrawText((uchar*)animText, 20, mConfig->screen_height - 60);
 	}
+}
+
+void MD3Viewer_DrawButtons() {
+	glColor3f(0.0f, 0.0f, 0.0f);
 	
+	MD3Viewer_DrawText((uchar *)"1: Enable / Disable texture", 20, mConfig->screen_height - 60);
+	MD3Viewer_DrawText((uchar *)"2: Change vertex's drawing mode", 20, mConfig->screen_height - 80);
+	MD3Viewer_DrawText((uchar *)"3: Switch to next animation", 20, mConfig->screen_height - 100);
+	MD3Viewer_DrawText((uchar *)"9: Take a screenshoot", 20, mConfig->screen_height - 120);
 }
 
 void MD3Viewer_OnKeyDown(SDL_Keycode keyCode) {
 	switch( keyCode ) {
 		case SDLK_F1: 		mRunning = false; break;
+		
 		case SDLK_w: 		mPosition.z += 10; break;
 		case SDLK_s: 		mPosition.z -= 10; break;
 		case SDLK_a: 		mPosition.x += 10; break;
 		case SDLK_d: 		mPosition.x -= 10; break;
 		case SDLK_n: 		mPosition.y += 10; break;
 		case SDLK_m: 		mPosition.y -= 10; break;
-		case SDLK_KP_6: 	mRotate.y += 10; break;
-		case SDLK_KP_4: 	mRotate.y -= 10; break;
-		case SDLK_KP_8: 	mRotate.x += 10; break;
-		case SDLK_KP_2: 	mRotate.x -= 10; break;
+		
+		case SDLK_KP_7: 	mRotate.x += 10; break;
+		case SDLK_KP_9: 	mRotate.x -= 10; break;
+		case SDLK_KP_4: 	mRotate.y += 10; break;
+		case SDLK_KP_6: 	mRotate.y -= 10; break;
+		case SDLK_KP_1: 	mRotate.z += 10; break;
+		case SDLK_KP_3: 	mRotate.z -= 10; break;
+		
+		case SDLK_KP_8:		mAutoRotateX = !mAutoRotateX; break;
+		case SDLK_KP_5:		mAutoRotateY = !mAutoRotateY; break;
+		case SDLK_KP_2:		mAutoRotateZ = !mAutoRotateZ; break;
+		
 		
 		case SDLK_1: mTexture 	= !mTexture; break;
 		case SDLK_2: mTriangles = !mTriangles; break;
 		case SDLK_3: MD3Viewer_NextAnim(); break;
 		case SDLK_9: MD3Viewer_Screenshot(Utils_GetTimedFilename("sc", "bmp")); break;
 	}
+}
+
+void MD3Viewer_OnMouseButtonDown(SDL_MouseButtonEvent event) {
+	if( event.type != SDL_MOUSEBUTTONDOWN )
+		return;
+	
+	if( event.button == SDL_BUTTON_LEFT )
+		MD3Viewer_NextAnim();
+	else if( event.button == SDL_BUTTON_RIGHT )
+		MD3Viewer_PreviousAnim();
 }
 
 void MD3Viewer_OnMouseWheel(MouseWheel direction) {
@@ -271,7 +320,7 @@ void MD3Viewer_Error(const char *fmt, ...) {
 
 bool MD3Viewer_Screenshot(const char *filename) {
 	if( !filename ) {
-		fprintf(stderr, "MD3Viewer_Screenshot: Wrong or empty filename!\n");
+		MD3Viewer_Error("MD3Viewer_Screenshot: Wrong or empty filename!\n");
 		return false;
 	}
 	
@@ -281,7 +330,7 @@ bool MD3Viewer_Screenshot(const char *filename) {
 	uchar *pixels = (uchar *) malloc(w * h * 4);
 	
 	if( !pixels ) {
-		fprintf(stderr, "MD3Viewer_Screenshot: Failed to allocate memory for pixels!\n");
+		MD3Viewer_Error("MD3Viewer_Screenshot: Failed to allocate memory for pixels!\n");
 		return false;
 	}
 	
@@ -289,7 +338,7 @@ bool MD3Viewer_Screenshot(const char *filename) {
 	
 	if( !rPixels ) {
 		free(pixels);
-		fprintf(stderr, "MD3Viewer_Screenshot: Failed to allocate memory for rotated pixels!\n");
+		MD3Viewer_Error("MD3Viewer_Screenshot: Failed to allocate memory for rotated pixels!\n");
 		
 		return false;
 	}
@@ -317,22 +366,41 @@ bool MD3Viewer_Screenshot(const char *filename) {
 		return true;
 	} else {
 		free(rPixels);
-		fprintf(stderr, "Failed to create screenshot surface!\n");
+		MD3Viewer_Error("Failed to create screenshot surface!\n");
 		
 		return false;
 	}
 }
-
+// TODO: dont play anim if no enoght frame.... 
 void MD3Viewer_NextAnim() {
 	if( mAnims != NULL ) {
 		mAnim++;
 		mAnim = mAnim % mAnims->n_anims;
 		
-		mFrame = 0;
+		if( mAnims->anims[mAnim].firstFrame + mAnims->anims[mAnim].numFrames <= mModel->header.num_frames ) {
+			mFrame = 0;
 		
-		mModel->fps = mAnims->anims[mAnim].fps;
+			mModel->fps = mAnims->anims[mAnim].fps;
 		
-		printf("Currentanim(%u): %s\n", mAnim, mAnims->anims[mAnim].name);
+			printf("Current animation(%u): %s\n", mAnim, mAnims->anims[mAnim].name);
+		} else
+			MD3Viewer_NextAnim();	
+	}
+}
+
+void MD3Viewer_PreviousAnim() {
+	if( mAnims != NULL ) {
+		mAnim--;
+		mAnim = mAnim % mAnims->n_anims;
+		
+		if( mAnims->anims[mAnim].firstFrame + mAnims->anims[mAnim].numFrames <= mModel->header.num_frames ) {
+			mFrame = 0;
+		
+			mModel->fps = mAnims->anims[mAnim].fps;
+		
+			printf("Current animation(%u): %s\n", mAnim, mAnims->anims[mAnim].name);
+		} else
+			MD3Viewer_PreviousAnim();	
 	}
 }
 

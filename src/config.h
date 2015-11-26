@@ -49,6 +49,8 @@ typedef struct Config {
 	bool debug;
 	bool info;
 	
+	char *modelFile;
+	char *animFile;
 	char *configFile;
 	char *stdoutFile;
 	char *stderrFile;
@@ -56,7 +58,9 @@ typedef struct Config {
 
 void Config_Init(Config *config);
 bool Config_Load(Config *config, const char *filename);
+bool Config_FromArgs(Config *config, int argc, char *args[]);
 void Config_Check(Config *config);
 void Config_Print(Config config);
+void Config_PrintUsage(char *program);
 
 #endif

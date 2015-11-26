@@ -45,6 +45,9 @@ Temporary Items
 # MD3 Viewer
 stdout.txt
 stdlib.txt
+memlog.txt
+stderr.txt
+*.zip
 lines.txt
 lineCounter.bat
 lc.exe

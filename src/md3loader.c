@@ -1,5 +1,9 @@
 #include "md3loader.h"
 
+#ifdef DMALLOC
+#include "debugmalloc.h"
+#endif
+
 bool MD3Loader_Load(MD3Model *model, const char *file) {
 	if( model == NULL )
 		return false;
@@ -215,147 +219,29 @@ bool MD3Loader_LoadTextures(FILE *f, MD3Model *model, MD3Surface *surface) {
 	}
 	
 	for(i = 0; i < surface->num_shaders; i++) {
+		surface->textures[i] = 0; // default value
+		
 		path = Utils_FileInPath(model->path, Utils_GetFile(surface->shaders[i].name));
-		 
-		// try to load: jpg, bmp, tga too...
-		if( Texture_Load(&surface->textures[i], path) ) { // surface->shaders[i].name
-			printf("MD3Loader_LoadTextures: Texture '%s' loaded!\n", path);
-		} else {
+		path = Utils_GetFileWithoutExt(path);
+		
+		if( path ) {
+			if( !Texture_Load(&surface->textures[i], Utils_Implode(path, ".jpg")) ) {
+				if( !Texture_Load(&surface->textures[i], Utils_Implode(path, ".tga")) ) {
+					if( !Texture_Load(&surface->textures[i], Utils_Implode(path, ".bmp")) ) {
+						if( !Texture_Load(&surface->textures[i], Utils_Implode(path, ".png")) ) {
+							fprintf(stderr, "MD3Loader_LoadTextures: Failed to load texture '%s'!\n", path);
+						}
+					}
+				}
+			}
+		} else
 			fprintf(stderr, "MD3Loader_LoadTextures: Failed to load texture '%s'!\n", path);
-		}
+		
 	}
 	
 	//free(path);
 	
 	return true;
-}
-
-void MD3Loader_InfoPrintStart() {
-	uint i;
-	
-	for(i = 0; i < 68; i++) {
-		putchar('#');
-	}
-	
-	putchar('\n');
-}
-
-void MD3Loader_InfoPrintEnd() {
-	uint i;
-	
-	for(i = 0; i < 68; i++) {
-		putchar('#');
-	}
-	
-	printf("\n\n");
-}
-
-void MD3Loader_PrintHeaderInfo(MD3Header header) {
-	MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Header:\n");
-	printf("\tIdent: 0x%x\n", 						header.ident);
-	printf("\tVersion: %d\n", 						header.version);
-	printf("\tName: %s\n", 							header.name);
-	printf("\tFlags: %d (0x%X)\n", 					header.flags, header.flags);
-	printf("\tNumber of frames: %d\n", 				header.num_frames);
-	printf("\tNumber of tags: %d\n", 				header.num_tags);
-	printf("\tNumber of surfaces: %d\n", 			header.num_surfaces);
-	printf("\tNumber of skins: %d\n", 				header.num_skins);
-	printf("\tOffset of frames: %d (0x%X)\n", 		header.ofs_frames, header.ofs_frames);
-	printf("\tOffset of tags: %d (0x%X)\n", 		header.ofs_tags, header.ofs_tags);
-	printf("\tOffset of surfaces: %d (0x%X)\n", 	header.ofs_surfaces, header.ofs_surfaces);
-	printf("\tOffset of end-of-file: %d (0x%X)\n", 	header.ofs_eof, header.ofs_eof);
-	
-	MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintFrameInfo(MD3Frame frame) {
-	MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Frame:\n");
-	printf("\tMin bounds: %f %f %f\n", 		frame.min_bounds.x, frame.min_bounds.y, frame.min_bounds.z);
-	printf("\tMax bounds: %f %f %f\n", 		frame.max_bounds.x, frame.max_bounds.y, frame.max_bounds.z);
-	printf("\tLocal origin: %f %f %f\n", 	frame.origin.x, frame.origin.y,frame.origin.z);
-	printf("\tRadius: %f\n", 				frame.radius);
-	printf("\tName: %s\n", 					frame.name);
-	
-	MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintTagInfo(MD3Tag tag) {
-	MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Tag:\n");
-	printf("\tName: %s\n", 				tag.name);
-	printf("\tOrigin: %f %f %f\n", 		tag.origin.x, tag.origin.y, tag.origin.z);
-	printf("\tAxis[0]: %f %f %f\n", 	tag.axis[0].x, tag.axis[0].y, tag.axis[0].z);
-	printf("\tAxis[1]: %f %f %f\n", 	tag.axis[1].x, tag.axis[1].y, tag.axis[1].z);
-	printf("\tAxis[2]: %f %f %f\n", 	tag.axis[2].x, tag.axis[2].y, tag.axis[2].z);
-	
-	MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintSurfaceInfo(MD3Surface surface) {
-	MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Surface:\n");
-	printf("\tIdent: 0x%x\n", 								surface.ident);
-	printf("\tName: %s\n", 									surface.name);
-	printf("\tFlags: %d (0x%X)\n", 							surface.flags, surface.flags);
-	printf("\tNumber of frames: %d\n", 						surface.num_frames);
-	printf("\tNumber of shaders: %d\n", 					surface.num_shaders);
-	printf("\tNumber of vertices: %d\n", 					surface.num_vertices);
-	printf("\tNumber of triangles: %d\n", 					surface.num_triangles);
-	printf("\tOffset of triangles: %d (0x%X)\n", 			surface.ofs_triangles, surface.ofs_triangles);
-	printf("\tOffset of shaders: %d (0x%X)\n", 				surface.ofs_shaders, surface.ofs_shaders);
-	printf("\tOffset of texture coordinates: %d (0x%X)\n", 	surface.ofs_textCoords, surface.ofs_textCoords);
-	printf("\tOffset of vertices: %d (0x%X)\n", 			surface.ofs_vertices, surface.ofs_vertices);
-	printf("\tOffset of end-of-shader: %d (0x%X)\n", 		surface.ofs_end, surface.ofs_end);
-	
-	MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintShaderInfo(MD3Shader shader) {
-	//MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Shader:\n");
-	printf("\tName: %s\n", shader.name);
-	printf("\tIndex: %d\n\n", shader.index);
-	
-	//MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintTriangleInfo(MD3Triangle triangle) {
-	//MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Triangle:\n");
-	printf("\tIndexes: %d %d %d\n\n", triangle.indexes[0], triangle.indexes[1], triangle.indexes[2]);
-	
-	//MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintTextCoordInfo(MD3TextCoord textCoord) {
-	//MD3Loader_InfoPrintStart();
-	
-	printf("MD3 Texture Coordinate:\n");
-	printf("\tS: %f\n", textCoord.s);
-	printf("\tT: %f\n\n", textCoord.t);
-	
-	//MD3Loader_InfoPrintEnd();
-}
-
-void MD3Loader_PrintVertexInfo(MD3Vertex vertex) {
-	//MD3Loader_InfoPrintStart();
-	
-	vector normal = Utils_DecodeVertexNormal(vertex.normal);
-	
-	printf("MD3 Vertex:\n");
-	printf("\tCoordinate: %d %d %d\n", vertex.position.x, vertex.position.y, vertex.position.z);
-	printf("\tNormal: %u %u\n", vertex.normal[0], vertex.normal[1]);
-	printf("\tNormal: %f %f %f\n\n", normal.x, normal.y, normal.z);
-	
-	//MD3Loader_InfoPrintEnd();
 }
 
 void MD3Loader_FreeSurface(MD3Surface *surface) {
@@ -364,8 +250,6 @@ void MD3Loader_FreeSurface(MD3Surface *surface) {
 	free(surface->textCoords);
 	free(surface->vertices);
 	free(surface->textures);
-	
-	free(surface);
 }
 
 void MD3Loader_FreeModel(MD3Model *model) {
@@ -376,7 +260,10 @@ void MD3Loader_FreeModel(MD3Model *model) {
 	
 	for(i = 0; i < model->header.num_surfaces; i++) {
 		MD3Loader_FreeSurface(&model->surfaces[i]);
+		//free(model->surfaces[i]);
 	}
+	
+	free(model->surfaces);
 	
 	//free(model->path);
 }
